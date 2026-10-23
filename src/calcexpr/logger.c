@@ -214,7 +214,7 @@ void logger_log(log_level_t level, const char *format, ...) {
 
     /* 输出格式：[时间戳] [级别] 消息 */
     fprintf(out, "[%s] [%s] ", time_str, level_str);
-    vfprintf(out, format, args);
+    vfprintf(out, format, args); // NOLINT(clang-analyzer-valist.Uninitialized)
     va_end(args);
 
     /* ---------------------------------------------------------------

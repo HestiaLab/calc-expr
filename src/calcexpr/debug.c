@@ -250,7 +250,7 @@ void debug_log(int level, unsigned module, const char *file, int line, const cha
 
     va_list args;
     va_start(args, format);
-    vfprintf(out, format, args);
+    vfprintf(out, format, args); // NOLINT(clang-analyzer-valist.Uninitialized)
     va_end(args);
 
     fprintf(out, " (at %s:%d)\n", file, line);
