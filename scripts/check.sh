@@ -61,42 +61,19 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-if [ "$SKIP_FORMAT" -eq 0 ] && command -v clang-format >/dev/null 2>&1; then
+if [ "$SKIP_FORMAT" -eq 0 ]; then
   if [ "$FIX_FORMAT" -ne 0 ]; then
-    find include src test -type f \( -name '*.c' -o -name '*.h' \) -print0 \
-      | xargs -0 clang-format -i
+    sh "$SCRIPT_DIR/static_analysis.sh" format-check --fix
   else
-    find include src test -type f \( -name '*.c' -o -name '*.h' \) -print0 \
-      | xargs -0 clang-format --dry-run --Werror
+    sh "$SCRIPT_DIR/static_analysis.sh" format-check
   fi
-elif [ "$SKIP_FORMAT" -eq 0 ]; then
-  echo "Skipping clang-format: command not found."
 fi
 
 cmake --preset "$PRESET"
 cmake --build --preset "$PRESET"
 
 if [ "$ENABLE_TIDY" -ne 0 ]; then
-  if command -v clang-tidy >/dev/null 2>&1; then
-    BUILD_DIR="build/$PRESET"
-    if [ -f "$BUILD_DIR/compile_commands.json" ]; then
-      # 只检查编译数据库中实际参与构建的 .c 文件，避免平台无关
-      # 源文件与条件编译文件在缺少对应编译标志时产生误报。
-      if command -v python3 >/dev/null 2>&1; then
-        files=$(python3 -c 'import json,sys; print("\n".join(e["file"] for e in json.load(open(sys.argv[1])) if e["file"].endswith(".c")))' "$BUILD_DIR/compile_commands.json")
-      else
-        files=$(find src test -type f -name '*.c')
-      fi
-      for f in $files; do
-        clang-tidy --warnings-as-errors='*' -quiet -p "$BUILD_DIR" "$f"
-      done
-    else
-      find src test -type f -name '*.c' \
-        -exec clang-tidy --warnings-as-errors='*' -quiet --extra-arg=-std=c11 {} -- -Iinclude -Isrc \;
-    fi
-  else
-    echo "Skipping clang-tidy: command not found."
-  fi
+  sh "$SCRIPT_DIR/static_analysis.sh" tidy --build-dir "build/$PRESET"
 fi
 
 ctest --preset "$PRESET" --output-on-failure

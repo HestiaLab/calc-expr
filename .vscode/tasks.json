@@ -2,38 +2,43 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "CMake Build",
+      "label": "CMake: Configure Ninja Debug",
       "type": "shell",
       "command": "cmake",
-      "args": ["--build", "build"],
+      "args": [
+        "--preset",
+        "ninja-debug"
+      ],
+      "problemMatcher": [],
+      "detail": "Configure the ninja-debug preset."
+    },
+    {
+      "label": "CMake: Build Ninja Debug",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "--preset",
+        "ninja-debug"
+      ],
       "group": {
         "kind": "build",
         "isDefault": true
-      }
+      },
+      "problemMatcher": [],
+      "detail": "Build the ninja-debug preset."
     },
     {
-      "label": "CMake Build (Debug Mode)",
+      "label": "CTest: Ninja Debug",
       "type": "shell",
-      "command": "${workspaceFolder}/vscode_build_debug.bat",
-      "group": "build",
-      "problemMatcher": ["$gcc"],
-      "detail": "使用 ENABLE_DEBUG=ON 构建，运行时支持 --debug 参数"
-    },
-    {
-      "label": "CMake Clean and Build (Debug)",
-      "type": "shell",
-      "command": "${workspaceFolder}/vscode_build_debug.bat",
-      "group": "build",
-      "problemMatcher": ["$gcc"],
-      "detail": "清理后重新构建，开启调试系统"
-    },
-    {
-      "label": "CMake Configure (Debug Only)",
-      "type": "shell",
-      "command": "${workspaceFolder}/vscode_build_debug.bat",
-      "group": "build",
-      "problemMatcher": ["$gcc"],
-      "detail": "仅配置项目，不构建（用于检查调试编译选项）"
+      "command": "ctest",
+      "args": [
+        "--preset",
+        "ninja-debug",
+        "--output-on-failure"
+      ],
+      "problemMatcher": [],
+      "detail": "Run ninja-debug preset tests."
     }
   ]
 }

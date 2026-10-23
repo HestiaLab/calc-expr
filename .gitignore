@@ -1,97 +1,26 @@
-# Prerequisites
-*.d
-
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
-
-# Linker output
-*.ilk
-*.map
-*.exp
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
-
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
-
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
-
-# debug information files
-*.dwo
-
-# Visual Studio
-.vs/
-*.sln
-*.slnx
-*.vcxproj
-*.vcxproj.filters
-*.vcxproj.user
-
-# Visual Studio Code
-.cache/
-.vscode/*
-!.vscode/launch.json
-!.vscode/tasks.json
-!.vscode/extensions.json
-
-# CMake
 build/
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-Makefile
-compile_commands.json
+dist/
+install/
+install-*/
+out/
+*.user
+*.swp
+*.swo
+.cache/
+.vs/
 CMakeUserPresets.json
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/c_cpp_properties.example.json
+!.vscode/tasks.json
+compile_commands.json
 Testing/
-
-# Agent
-.claude/
-
-# ========== Incredibuild ==========
-*.recipe
-*.tlog
-*.dat
-*.ib_chunk
-*.ib_manifest
-*.ib_log*
-BuildConsole/
-IB_temp/
-IncrementalBuild/
-.ib_cache/
-x64/
-x86/
+.wix/
+.hermes/
+__pycache__/
+*.py[cod]
+*-cppcheck-build-dir/
+.static-analysis-files.txt
+Okk/
+TestProj/

@@ -47,7 +47,8 @@ function Invoke-CheckedCommand {
 }
 
 if (-not $SkipFormat -and (Get-Command clang-format -ErrorAction SilentlyContinue)) {
-    $files = Get-ChildItem -Path include,src,test -Recurse -File -Include *.c,*.h |
+    $files = Get-ChildItem -Path include,src,tests -Recurse -File -Include *.c,*.h,*.cpp |
+        Where-Object { $_.FullName -notlike "*\tests\vendor\*" } |
         Sort-Object FullName
     if ($files.Count -gt 0) {
         # Build the file list with `+=`, not an inline array literal. Binding
@@ -75,27 +76,33 @@ if ($EnableTidy) {
     if (Get-Command clang-tidy -ErrorAction SilentlyContinue) {
         $buildDirectory = Join-Path "build" $Preset
         $compileCommands = Join-Path $buildDirectory "compile_commands.json"
+        $generatedIncludeDirectory = Join-Path $buildDirectory "generated\include"
+        $files = Get-ChildItem -Path src,tests -Recurse -File -Include *.c |
+            Where-Object { $_.FullName -notlike "*\tests\package_smoke\*" } |
+            Where-Object { $_.FullName -notlike "*\tests\subproject_smoke\*" } |
+            Where-Object { $_.FullName -notlike "*\tests\vendor\*" } |
+            Sort-Object FullName
+
+        # 只分析当前编译数据库中的文件，避免误分析其他平台的 platform 实现。
+        $compiledFiles = @()
         if (Test-Path $compileCommands) {
-            # 只检查编译数据库中实际参与构建的 .c 文件，避免平台无关
-            # 源文件（其他 OS 的 platform_*.c）与条件编译文件（debug.c）
-            # 在缺少对应编译标志时产生误报。
-            $files = @(Get-Content $compileCommands -Raw | ConvertFrom-Json |
-                ForEach-Object { $_.file } |
-                Where-Object { $_ -match '\.c$' } |
-                Sort-Object)
-            foreach ($file in $files) {
+            $compiledFiles = @(Get-Content $compileCommands -Raw | ConvertFrom-Json |
+                ForEach-Object { [System.IO.Path]::GetFullPath($_.file) })
+        }
+
+        foreach ($file in $files) {
+            if ($compiledFiles.Count -gt 0 -and $compiledFiles -notcontains $file.FullName) {
+                continue
+            }
+            if (Test-Path $compileCommands) {
                 Invoke-CheckedCommand -Command "clang-tidy" -Arguments @(
-                    $file,
+                    $file.FullName,
                     "--warnings-as-errors=*",
                     "-quiet",
                     "-p",
                     $buildDirectory
                 )
-            }
-        } else {
-            $files = Get-ChildItem -Path src,test -Recurse -File -Include *.c |
-                Sort-Object FullName
-            foreach ($file in $files) {
+            } else {
                 Invoke-CheckedCommand -Command "clang-tidy" -Arguments @(
                     $file.FullName,
                     "--warnings-as-errors=*",
@@ -103,7 +110,7 @@ if ($EnableTidy) {
                     "--extra-arg=-std=c11",
                     "--",
                     "-Iinclude",
-                    "-Isrc"
+                    "-I$generatedIncludeDirectory"
                 )
             }
         }

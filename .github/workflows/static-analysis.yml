@@ -1,0 +1,45 @@
+name: 静态分析
+
+on:
+  push:
+    branches: [main, master, 'feature/**', 'fix/**', 'refactor/**', 'infra/**']
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cppcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: 安装工具
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck clang-format clang-tidy ninja-build yamllint
+
+      - name: YAML 检查
+        run: |
+          if [ -d templates ]; then
+            yamllint .github .yamllint.yml templates
+          else
+            yamllint .github .yamllint.yml
+          fi
+
+      - name: 格式检查
+        # Invoked via bash: scripts/ files are committed without the
+        # executable bit in this repository (mode 100644).
+        run: bash scripts/static_analysis.sh format-check --require-tools
+
+      - name: 配置 clang-tidy 编译数据库
+        run: cmake --preset ninja-debug
+
+      - name: clang-tidy 检查
+        run: bash scripts/static_analysis.sh tidy --require-tools
+
+      - name: cppcheck 检查
+        run: bash scripts/static_analysis.sh cppcheck --require-tools
