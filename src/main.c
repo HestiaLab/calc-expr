@@ -3,7 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "calculator.h"
+#include <calcexpr/calculator.h>
+#include <calcexpr/version.h>
+
 #include "command.h"
 #include "debug.h"
 #include "logger.h"
@@ -13,12 +15,41 @@
 
 typedef enum { INPUT_OK, INPUT_EOF, INPUT_TRUNCATED } input_read_status_t;
 
+static void print_cli_usage(void) {
+    printf("用法: calcexpr [选项]\n\n");
+    printf("选项:\n");
+    printf("  --version           显示版本号并退出\n");
+    printf("  --help, -h          显示本帮助并退出\n");
+    printf("  --debug, -d         开启调试输出\n");
+    printf("  --debug-level=N     设置调试级别 (0-5)\n");
+    printf("  --debug-module=NAME 设置调试模块 (lexer|parser|calc|main|all)\n\n");
+    printf("交互命令:\n");
+    printf("  /help               显示程序内帮助\n");
+    printf("  /show process       开启计算过程输出\n");
+    printf("  /hide process       关闭计算过程输出\n");
+    printf("  /quit, /exit, /q    退出程序\n");
+}
+
+static bool handle_meta_options(int argc, char *argv[]) {
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--version") == 0) {
+            printf("calcexpr %s\n", CALCEXPR_VERSION_STRING);
+            return true;
+        }
+        if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+            print_cli_usage();
+            return true;
+        }
+    }
+    return false;
+}
+
 static void print_welcome(void) {
     logger_log(LOG_INFO, "===========================================\n");
-    logger_log(LOG_INFO, "       C语言控制台计算器 v2.0\n");
+    logger_log(LOG_INFO, "    CalcExpr 数学表达式计算器 v%s\n", CALCEXPR_VERSION_STRING);
     logger_log(LOG_INFO, "===========================================\n");
     logger_log(LOG_INFO, "支持运算: + - * / ( )\n");
-    logger_log(LOG_INFO, "输入 'quit' 或 'exit' 退出程序\n\n");
+    logger_log(LOG_INFO, "输入 /quit 或 /exit 退出程序\n\n");
 }
 
 static void print_help(void) {
@@ -28,7 +59,8 @@ static void print_help(void) {
     logger_log(LOG_INFO, "- 支持小数和科学计数法，例如: 1e-3 * 5\n\n");
     logger_log(LOG_INFO, "- 输入 /help 查看全部命令\n");
     logger_log(LOG_INFO, "- 输入 /show process 开启计算过程输出\n");
-    logger_log(LOG_INFO, "- 输入 /hide process 关闭计算过程输出\n\n");
+    logger_log(LOG_INFO, "- 输入 /hide process 关闭计算过程输出\n");
+    logger_log(LOG_INFO, "- 输入 /quit、/exit 或 /q 退出程序\n\n");
 }
 
 static input_read_status_t read_input_line(char *input, size_t capacity) {
@@ -71,8 +103,7 @@ static void print_result(const char *expression, double result) {
 typedef enum { REPL_CONTINUE, REPL_EXIT } repl_action_t;
 
 static void print_prompt(const command_state_t *state) {
-    if (state->interactive.mode != INPUT_MODE_NORMAL &&
-        state->interactive.prompt != NULL) {
+    if (state->interactive.mode != INPUT_MODE_NORMAL && state->interactive.prompt != NULL) {
         logger_log(LOG_INFO, "%s", state->interactive.prompt);
         return;
     }
@@ -136,8 +167,7 @@ static void evaluate_and_print(const char *input) {
  * @param state        命令状态
  * @return REPL_EXIT 时主循环应退出，否则 REPL_CONTINUE
  */
-static repl_action_t process_repl_line(const char *input,
-                                       input_read_status_t input_status,
+static repl_action_t process_repl_line(const char *input, input_read_status_t input_status,
                                        command_state_t *state) {
     if (input_status == INPUT_EOF) {
         logger_log(LOG_INFO, "\n程序结束\n");
@@ -191,6 +221,12 @@ static repl_action_t process_repl_line(const char *input,
  */
 int main(int argc, char *argv[]) {
     command_state_t command_state;
+
+    /* -------- 元选项（无需初始化其他子系统） -------- */
+
+    if (handle_meta_options(argc, argv)) {
+        return 0;
+    }
 
     /* -------- 初始化阶段 -------- */
 

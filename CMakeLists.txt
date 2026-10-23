@@ -1,124 +1,117 @@
-# =============================================================================
-# CalcExpr - CMake 构建配置（跨平台表达式计算器）
-#
-# 构建：cmake --preset ninja-debug && cmake --build --preset ninja-debug
-# 测试：ctest --preset ninja-debug --output-on-failure
-# =============================================================================
-
 cmake_minimum_required(VERSION 3.21...3.31)
 
 project(CalcExpr
     VERSION 1.0.0
-    DESCRIPTION "A cross-platform expression calculator written in C"
-    HOMEPAGE_URL "https://github.com/wubing7755/CalcExpr"
+    DESCRIPTION "跨平台 C11 数学表达式计算器"
+    HOMEPAGE_URL "https://github.com/wubing7755/calc-expr"
     LANGUAGES C
 )
+set(CALCEXPR_PROJECT_AUTHOR "wubing7755")
+set(CALCEXPR_PROJECT_LICENSE "MIT")
 
-# CTest 开关（默认开启 BUILD_TESTING）
-include(CTest)
-
-# 导出 compile_commands.json（VSCode/clangd 智能提示）
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# =============================================================================
-# 构建类型配置
-# =============================================================================
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    set(CALCEXPR_IS_TOP_LEVEL_DEFAULT ON)
+else()
+    set(CALCEXPR_IS_TOP_LEVEL_DEFAULT OFF)
+endif()
+
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "构建类型" FORCE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
         "Debug" "Release" "RelWithDebInfo" "MinSizeRel")
 endif()
 
-# =============================================================================
-# C 语言标准
-# =============================================================================
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
-# =============================================================================
-# 特性开关
-# =============================================================================
-option(ENABLE_DEBUG "Enable debug macro system (zero overhead when OFF)" OFF)
-option(CALCEXPR_ENABLE_ASAN "Enable AddressSanitizer where supported" OFF)
-option(CALCEXPR_ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer where supported" OFF)
-option(CALCEXPR_ENABLE_COVERAGE "Enable coverage flags where supported" OFF)
+option(CALCEXPR_ENABLE_DEBUG "编译调试系统（关闭时零开销）" OFF)
+option(CALCEXPR_ENABLE_ASAN "启用 AddressSanitizer（平台支持时）" OFF)
+option(CALCEXPR_ENABLE_UBSAN "启用 UndefinedBehaviorSanitizer（平台支持时）" OFF)
+option(CALCEXPR_ENABLE_COVERAGE "启用覆盖率编译选项（平台支持时）" OFF)
+option(CALCEXPR_BUILD_CLI "构建 calcexpr 命令行程序" ${CALCEXPR_IS_TOP_LEVEL_DEFAULT})
+option(CALCEXPR_BUILD_TESTING "构建 CTest 测试" ${CALCEXPR_IS_TOP_LEVEL_DEFAULT})
+option(CALCEXPR_INSTALL "生成安装规则" ${CALCEXPR_IS_TOP_LEVEL_DEFAULT})
 
-# =============================================================================
-# 调试系统配置
-# =============================================================================
-if(ENABLE_DEBUG)
-    add_compile_definitions(DEBUG_ENABLE=1)
-    add_compile_definitions(DEBUG_DEFAULT_LEVEL=5)  # TRACE level
-    add_compile_definitions(DEBUG_DEFAULT_MODULE=0xFF)  # ALL modules
-else()
-    add_compile_definitions(DEBUG_ENABLE=0)
-endif()
+set(CALCEXPR_GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/include")
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/calcexpr_version.h.in"
+    "${CALCEXPR_GENERATED_INCLUDE_DIR}/calcexpr/version.h"
+    @ONLY
+)
 
-# =============================================================================
-# 构建模块
-# =============================================================================
-include(cmake/platform.cmake)
-include(cmake/CompilerOptions.cmake)
-include(cmake/Sources.cmake)
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/CompilerOptions.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Dependencies.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Sources.cmake")
 
-# =============================================================================
-# 主程序可执行文件
-# =============================================================================
-set(CALCEXPR_CORE_ALL ${CALCEXPR_CORE_SOURCES} ${CALCEXPR_PLATFORM_SOURCES})
-if(ENABLE_DEBUG)
-    list(APPEND CALCEXPR_CORE_ALL ${CALCEXPR_DEBUG_SOURCES})
-endif()
+add_library(calcexpr_core ${CALCEXPR_CORE_SOURCES})
+add_library(CalcExpr::calcexpr_core ALIAS calcexpr_core)
 
-add_executable(calculator ${CALCEXPR_CORE_ALL} ${CALCEXPR_MAIN_SOURCES})
+target_compile_features(calcexpr_core PUBLIC c_std_11)
 
-target_include_directories(calculator
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+target_compile_definitions(calcexpr_core
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/platform
+        CALCEXPR_BUILDING_LIBRARY
+    PUBLIC
+        $<$<BOOL:${CALCEXPR_ENABLE_DEBUG}>:DEBUG_ENABLE=1>
+        $<$<NOT:$<BOOL:${CALCEXPR_ENABLE_DEBUG}>>:DEBUG_ENABLE=0>
+        $<$<BOOL:${CALCEXPR_ENABLE_DEBUG}>:DEBUG_DEFAULT_LEVEL=5>
+        $<$<BOOL:${CALCEXPR_ENABLE_DEBUG}>:DEBUG_DEFAULT_MODULE=0xFF>
 )
-
-calcexpr_target_defaults(calculator)
-
-# 数学库 - Unix-like 系统需要，Windows 不需要
-if(UNIX)
-    target_link_libraries(calculator PRIVATE m)
+if(BUILD_SHARED_LIBS)
+    target_compile_definitions(calcexpr_core PUBLIC CALCEXPR_SHARED)
 endif()
-
-set_target_properties(calculator PROPERTIES
+set_target_properties(calcexpr_core PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-    OUTPUT_NAME "calculator"
 )
 
-# =============================================================================
-# 单元测试
-# =============================================================================
-if(BUILD_TESTING)
-    enable_testing()
-    include(cmake/Tests.cmake)
+target_include_directories(calcexpr_core
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CALCEXPR_GENERATED_INCLUDE_DIR}>
+        $<INSTALL_INTERFACE:include>
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/calcexpr
+)
+if(UNIX)
+    target_link_libraries(calcexpr_core PUBLIC m)
+endif()
+calcexpr_target_defaults(calcexpr_core)
+
+if(CALCEXPR_BUILD_CLI)
+    if(WIN32)
+        configure_file(
+            "${CMAKE_CURRENT_SOURCE_DIR}/res/calcexpr.rc.in"
+            "${CMAKE_CURRENT_BINARY_DIR}/generated/calcexpr.rc"
+            @ONLY
+        )
+    endif()
+    add_executable(calcexpr ${CALCEXPR_CLI_SOURCES})
+    if(WIN32)
+        target_sources(calcexpr PRIVATE
+            "${CMAKE_CURRENT_BINARY_DIR}/generated/calcexpr.rc"
+        )
+    endif()
+    target_include_directories(calcexpr PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/calcexpr
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/calcexpr/platform
+    )
+    target_link_libraries(calcexpr PRIVATE calcexpr_core)
+    calcexpr_target_defaults(calcexpr)
+    set_target_properties(calcexpr PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    )
 endif()
 
-# =============================================================================
-# 安装规则
-# =============================================================================
-install(TARGETS calculator
-    RUNTIME DESTINATION bin
-)
+if(CALCEXPR_BUILD_TESTING)
+    enable_testing()
+    include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Tests.cmake")
+endif()
 
-# =============================================================================
-# 打印构建信息
-# =============================================================================
-message(STATUS "")
-message(STATUS "============================================================")
-message(STATUS "  CalcExpr - Build Configuration")
-message(STATUS "============================================================")
-message(STATUS "  Version:        ${PROJECT_VERSION}")
-message(STATUS "  Platform:       ${CMAKE_SYSTEM_NAME}")
-message(STATUS "  Compiler:       ${CMAKE_C_COMPILER_ID} (${CMAKE_C_COMPILER})")
-message(STATUS "  Build Type:     ${CMAKE_BUILD_TYPE}")
-message(STATUS "  C Standard:     C${CMAKE_C_STANDARD}")
-message(STATUS "  Debug System:   ${ENABLE_DEBUG}")
-message(STATUS "============================================================")
-message(STATUS "")
+if(CALCEXPR_INSTALL)
+    include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Packaging.cmake")
+endif()
+
+message(STATUS "CalcExpr ${PROJECT_VERSION} | ${CMAKE_BUILD_TYPE} | C11 | 调试系统: ${CALCEXPR_ENABLE_DEBUG}")

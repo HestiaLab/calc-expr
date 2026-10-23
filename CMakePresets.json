@@ -25,7 +25,8 @@
       "displayName": "Debug",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CALCEXPR_ENABLE_DEBUG": "ON"
       }
     },
     {
@@ -41,7 +42,8 @@
       "displayName": "Ninja Debug",
       "inherits": "ninja-base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CALCEXPR_ENABLE_DEBUG": "ON"
       }
     },
     {
@@ -50,6 +52,14 @@
       "inherits": "ninja-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "ninja-shared",
+      "displayName": "Ninja Shared Library",
+      "inherits": "ninja-debug",
+      "cacheVariables": {
+        "BUILD_SHARED_LIBS": "ON"
       }
     },
     {
@@ -67,6 +77,15 @@
       "inherits": "ninja-debug",
       "cacheVariables": {
         "CALCEXPR_ENABLE_COVERAGE": "ON"
+      }
+    },
+    {
+      "name": "shared",
+      "displayName": "Shared Library",
+      "inherits": "debug",
+      "binaryDir": "${sourceDir}/build/shared",
+      "cacheVariables": {
+        "BUILD_SHARED_LIBS": "ON"
       }
     },
     {
@@ -108,6 +127,11 @@
       "configurePreset": "ninja-release"
     },
     {
+      "name": "ninja-shared",
+      "inherits": "ninja-build-base",
+      "configurePreset": "ninja-shared"
+    },
+    {
       "name": "ninja-asan",
       "inherits": "ninja-build-base",
       "configurePreset": "ninja-asan"
@@ -126,6 +150,11 @@
       "name": "release",
       "configurePreset": "release",
       "configuration": "Release"
+    },
+    {
+      "name": "shared",
+      "configurePreset": "shared",
+      "configuration": "Debug"
     },
     {
       "name": "asan",
@@ -157,6 +186,11 @@
       "configurePreset": "ninja-release"
     },
     {
+      "name": "ninja-shared",
+      "inherits": "test-base",
+      "configurePreset": "ninja-shared"
+    },
+    {
       "name": "ninja-asan",
       "inherits": "test-base",
       "configurePreset": "ninja-asan"
@@ -177,6 +211,12 @@
       "inherits": "test-base",
       "configurePreset": "release",
       "configuration": "Release"
+    },
+    {
+      "name": "shared",
+      "inherits": "test-base",
+      "configurePreset": "shared",
+      "configuration": "Debug"
     },
     {
       "name": "asan",

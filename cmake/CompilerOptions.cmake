@@ -29,7 +29,7 @@ function(calcexpr_target_sanitizers target)
             target_link_options(${target} PRIVATE -fsanitize=undefined)
         else()
             message(WARNING
-                "CALCEXPR_ENABLE_UBSAN is ON, but UBSAN is not configured for MSVC.")
+                "CALCEXPR_ENABLE_UBSAN 已开启，但本模板未为 MSVC 配置 UBSAN。")
         endif()
     endif()
 endfunction()
@@ -44,7 +44,7 @@ function(calcexpr_target_coverage target)
         target_link_options(${target} PRIVATE --coverage)
     else()
         message(WARNING
-            "CALCEXPR_ENABLE_COVERAGE is ON, but coverage flags are only configured for GCC and Clang-like compilers.")
+            "CALCEXPR_ENABLE_COVERAGE 已开启，但覆盖率选项只对 GCC 与 Clang 系编译器生效。")
     endif()
 endfunction()
 

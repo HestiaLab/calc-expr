@@ -1,5 +1,5 @@
-# C's malloc/realloc/free intentionally convert between object pointers and
-# void *, so disable the C++-oriented checks that flag that pattern.
+# C 的 malloc/realloc/free 会有意进行对象指针与 void * 之间的转换，
+# 因此关闭针对该模式的 C++ 风格检查。
 Checks: >
   clang-diagnostic-*,
   clang-analyzer-*,
@@ -12,8 +12,7 @@ Checks: >
   -misc-no-recursion,
   -bugprone-easily-swappable-parameters,
   -bugprone-multi-level-implicit-pointer-conversion,
-  -bugprone-reserved-identifier,
   -readability-*
 WarningsAsErrors: ''
-HeaderFilterRegex: '^(include|src|test).*'
+HeaderFilterRegex: '^(include|src|tests/(?!vendor)).*'
 FormatStyle: file
