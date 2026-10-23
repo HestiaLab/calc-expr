@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21...3.31)
 
 project(CalcExpr
-    VERSION 1.0.0
+    VERSION 0.1.0
     DESCRIPTION "跨平台 C11 数学表达式计算器"
     HOMEPAGE_URL "https://github.com/wubing7755/calc-expr"
     LANGUAGES C
