@@ -3,6 +3,10 @@
  * @brief 调试系统运行时实现
  */
 
+#if !defined(_WIN32) && !defined(_WIN64)
+#define _POSIX_C_SOURCE 200809L // NOLINT(bugprone-reserved-identifier)
+#endif
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

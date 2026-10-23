@@ -95,6 +95,8 @@ typedef struct {
  *
  * TRACE 级别会根据 depth 添加缩进，每层 depth 增加 2 个空格
  */
+/* clang-format off */
+/* 不同 clang-format 版本对宏续行对齐规则不同，固定为手动排版。 */
 #if DEBUG_ENABLE
 #define PARSER_TRACE(level, depth, ...)                                                            \
     DEBUG_IF((level), DEBUG_MODULE_PARSER, do {                                                    \
@@ -104,7 +106,7 @@ typedef struct {
                              : (level) >= DEBUG_LEVEL_DEBUG ? DEBUG_ANSI_BLUE                      \
                              : (level) >= DEBUG_LEVEL_INFO  ? DEBUG_ANSI_GREEN                     \
                              : (level) >= DEBUG_LEVEL_WARN  ? DEBUG_ANSI_YELLOW                    \
-                                                            : DEBUG_ANSI_RED DEBUG_ANSI_BOLD)      \
+                                                            : DEBUG_ANSI_RED DEBUG_ANSI_BOLD)       \
                           : "";                                                                    \
         const char *parser_reset = g_debug_color ? DEBUG_ANSI_RESET : "";                          \
         fprintf(parser_out, "%s[PARSER] ", parser_color);                                          \
@@ -117,6 +119,7 @@ typedef struct {
 #else
 #define PARSER_TRACE(level, depth, ...) ((void)0)
 #endif
+/* clang-format on */
 
 /* ========================================================================
  * 函数原型声明（前向声明）
