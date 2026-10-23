@@ -4,16 +4,16 @@
  */
 
 /*
- * 定义 POSIX 特性宏以启用 clock_gettime 和 usleep
+ * 定义 POSIX 特性宏以启用 clock_gettime 和 nanosleep
  * 必须在所有 include 之前定义
  */
 #define _POSIX_C_SOURCE 199309L // NOLINT(bugprone-reserved-identifier)
 
 #include "platform.h"
+#include <errno.h>
 #include <locale.h>
 #include <stdio.h>
 #include <time.h>
-#include <unistd.h>
 
 /* ========================================================================
  * 公共函数实现
@@ -42,7 +42,13 @@ uint64_t platform_get_tick_ms(void) {
 }
 
 void platform_sleep_ms(uint32_t ms) {
-    usleep(ms * 1000); /* usleep 接受微秒 */
+    struct timespec request;
+    request.tv_sec = (time_t)(ms / 1000U);
+    request.tv_nsec = (long)(ms % 1000U) * 1000000L;
+
+    while (nanosleep(&request, &request) == -1 && errno == EINTR) {
+        /* 被信号打断时继续剩余时间 */
+    }
 }
 
 void platform_enable_utf8(void) {
