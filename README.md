@@ -1,10 +1,42 @@
 # CalcExpr
 
+A zero-dependency, cross-platform C11 math expression evaluator built on a recursive-descent parser.
+
 跨平台 C11 数学表达式计算器，使用递归下降解析器完成表达式求值。
 
+v0.1.0（2026-10-23）· MIT · Linux / macOS / Windows CI 通过
+
+[![CI](https://github.com/HestiaLab/calc-expr/actions/workflows/ci.yml/badge.svg)](https://github.com/HestiaLab/calc-expr/actions/workflows/ci.yml)
+[![Static Analysis](https://github.com/HestiaLab/calc-expr/actions/workflows/static-analysis.yml/badge.svg)](https://github.com/HestiaLab/calc-expr/actions/workflows/static-analysis.yml)
+[![Release](https://img.shields.io/github/v/release/HestiaLab/calc-expr)](https://github.com/HestiaLab/calc-expr/releases/tag/v0.1.0)
 [![C11](https://img.shields.io/badge/C-C11-blue)](https://en.wikipedia.org/wiki/C_(programming_language))
 [![CMake](https://img.shields.io/badge/CMake-3.21%2B-blue)](https://cmake.org/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+
+[Release v0.1.0](https://github.com/HestiaLab/calc-expr/releases/tag/v0.1.0) · [文档](#文档) · [贡献指南](CONTRIBUTING.md) · [变更日志](CHANGELOG.md)
+
+```console
+$ ./build/ninja-debug/bin/calcexpr.exe --version
+calcexpr 0.1.0
+
+$ ./build/ninja-debug/bin/calcexpr.exe --help
+用法: calcexpr [选项]
+
+选项:
+  --version           显示版本号并退出
+  --help, -h          显示本帮助并退出
+  ...
+
+$ printf '2+3*4\n1e-3*5\n1/0\n' | ./build/ninja-debug/bin/calcexpr.exe
+[2026-11-02 09:35:35] [INFO] 请输入表达式> [2026-11-02 09:35:35] [INFO] 表达式: 2+3*4
+[2026-11-02 09:35:35] [INFO] 结果:   14
+...
+[2026-11-02 09:35:35] [INFO] 结果:   0.005
+...
+[2026-11-02 09:35:35] [ERROR] 错误: 除数为零 (位置: 1, 附近: '/0')
+```
+
+（以上为 2026-11-02 在本机 Windows 11 + MSYS2 UCRT64 GCC 16.2.0 + CMake 4.3.3 + Ninja 1.13.2 的真实输出；为简洁省略了启动横幅与重复提示行。程序正常输出带有 `[YYYY-MM-DD HH:MM:SS] [INFO]` 前缀。）
 
 ## 项目简介
 
@@ -39,7 +71,7 @@ docs/adr/               架构决策记录
 
 ## 快速开始
 
-需要 CMake 3.21+、支持 C11 的编译器，以及 Ninja 预设所需的 Ninja。Windows 环境配置见[环境配置](docs/guides/environment.md)。
+需要 CMake 3.21+、支持 C11 的编译器、Ninja 预设所需的 Ninja，以及 Python 3（CTest 门禁脚本需要）。Windows 环境配置见[环境配置](docs/guides/environment.md)。
 
 首次设置：
 
@@ -74,6 +106,8 @@ ctest --preset ninja-debug --output-on-failure
 ```
 
 ## 使用方式
+
+以下为交互输入/输出示意；程序的真实输出带有 `[YYYY-MM-DD HH:MM:SS] [INFO]` 前缀（完整真实记录见首屏）。
 
 ```text
 请输入表达式> 2+3*4
